@@ -1,0 +1,11 @@
+package android.hardware.Uart@1.0;
+
+import IUartPortCallback;
+
+interface IUartPort {
+	initUartPort(string address,int32_t baudrate);
+	startRead();
+	stopRead();
+	closeUartPort();
+	setCallBack(int32_t type, IUartPortCallback callback);
+};

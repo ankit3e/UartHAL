@@ -1,0 +1,10 @@
+package android.hardware.Uart@1.0;
+
+struct UartPortEvent {
+    int32_t sp;
+    int32_t dist;
+	int32_t mode;
+	int32_t batt;
+	int32_t temp;
+    
+};

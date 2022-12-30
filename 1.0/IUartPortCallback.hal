@@ -1,0 +1,5 @@
+package android.hardware.Uart@1.0;
+
+interface IUartPortCallback {
+	oneway onDataUpdate(UartPortEvent event);
+};
