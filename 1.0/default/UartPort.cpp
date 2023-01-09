@@ -1,6 +1,7 @@
 // FIXME: your file license if you have one
 
 #include "UartPort.h"
+#include "termios.h"
 
 namespace android::hardware::Uart::implementation {
 
@@ -11,10 +12,76 @@ list<Callback> mList;
 Return<void> UartPort::initUartPort(const hidl_string& address, int32_t baudrate) {
     // TODO implement
 	//Here all the initialization of Uart Port will be performed by opening the device node
+	int fd = open("/dev/ttyS1",O_RDONLY);
+	if(fd == -1) {
+		cout<<"Error:\n";
+		return Void();
+	}
+	struct termios SerialPortSettings;
+	tcgetattr(fd, SerialPortSettings);
+	cfsetispeed(&SerialPortSettings, /*baudrate her*/);
+	/*Set flags here to control data bits, stop bits, parity bits
+	SerialPortSettings.c_cflag |= CS8;
+	*/
+	if((tcsetattr(fd, TCSANOW, &SerialPortSettings)) != 0) {
+		cout<<"\n Error setting the attributes\n";
+	}
+	else {
+		cout<<"Setting attribute completed\n";
+	}
+	tcflush(fd, TCIFLUSH);
+	close(fd);
     return Void();
 }
-int32_t readUART() {
+vector<int_32> getArrayFromChar(char *dataread,int level) {
+    char *cp = strtok(dataread, ", ");
+	vector<int_32> output;
+	int converted = 0 ;
+	char* tok = dataread ;
+	int i = 0 ;
+	int temp = 0;
+	do
+	{
+		converted = sscanf( tok, "%d", &temp) ;
+		output.push_back(temp);
+		tok = strchr( tok, ',' ) + 1 ;
+		i++ ;
+
+	} while( tok != NULL && converted != 0 ) ;
+
+	return output;
+}
+vector<int_32> readUART() {
 	//this function implements the logic of reading data from the fd of device node,
+
+	//Assumption made: the data which is being sent by the
+	int fd = open("/dev/ttyS1",O_RDONLY);
+
+	if (fd == -1) {
+		cout<<"\n failed opening the serial device";
+		return -1;
+	}
+	else {
+		cout<<"\n Opened serial device successfully";
+	}
+
+	char readBuf;
+	char sData[32]; //stores comma separated data
+	int bytesRead =0;
+	int count = 255;
+	while(count--){
+		bytesRead = read(fd, &readBuf, 1);
+		if(bytesRead>0) {
+			if(readBuf == "$") {
+				bytesRead = read(fd, &sData, 32);
+				close(fd);
+				return atoi(readBuf);
+			}
+		}
+	}
+	//Not data being sent
+	return -1; 
+
 }
 
 void parseData(vector<int32_t> dataReceived) {
@@ -38,11 +105,7 @@ void *runDataRead() {
 	while(1) {
 		dataReceived.clear();
 		receiveLength = 0;
-		while(receiveLength !=5 ) {
-			dataReceived.push_back(readUART());
-			receiveLength++;
-		}
-		
+		dataReceived = readUART();
 		parseData(dataReceived);
 		usleep(1000);
 	}
